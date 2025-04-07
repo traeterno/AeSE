@@ -1,0 +1,4 @@
+bin/
+build/
+.cache/
+test.xml
