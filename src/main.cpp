@@ -106,6 +106,78 @@ void execute(std::string args)
 			state.page = Page::Bones;
 		}
 	}
+
+	if (state.command == "texture-add")
+	{
+		if (args.empty()) { state.input = true; state.hint = "Texture name:"; }
+		else
+		{
+			skeleton.textures.push_back(Texture {.name=args});
+			state.page = Page::TexDetails;
+			state.currentTexture = args;
+		}
+	}
+	if (state.command == "texture-remove")
+	{
+		if (args.empty()) { state.input = true; state.hint = "Texture name:"; }
+		else
+		{
+			for (int i = 0; i < skeleton.textures.size(); i++)
+			{
+				if (skeleton.textures[i].name == args)
+				{
+					skeleton.textures.erase(skeleton.textures.begin() + i);
+					state.page = Page::Textures;
+					break;
+				}
+			}
+		}
+	}
+	if (state.command == "texture-select")
+	{
+		state.currentTexture = args;
+		state.page = Page::TexDetails;
+	}
+	if (state.command == "texture-name")
+	{
+		if (args.empty()) { state.input = true; state.hint = "New name"; }
+		else
+		{
+			for (int i = 0; i < skeleton.textures.size(); i++)
+			{
+				if (skeleton.textures[i].name == state.currentTexture)
+				{
+					skeleton.textures[i].name = args;
+					state.currentTexture = args;
+					break;
+				}
+			}
+		}
+	}
+	if (state.command == "texture-rect")
+	{
+		if (args.empty()) { state.input = true; state.hint = "New rect:"; }
+		else
+		{
+			for (int i = 0; i < skeleton.textures.size(); i++)
+			{
+				if (skeleton.textures[i].name == state.currentTexture)
+				{
+					auto x = args.substr(0, args.find(" "));
+					args = args.substr(args.find(" ") + 1);
+					auto y = args.substr(0, args.find(" "));
+					args = args.substr(args.find(" ") + 1);
+					auto w = args.substr(0, args.find(" "));
+					args = args.substr(args.find(" ") + 1);
+					skeleton.textures[i].rect = sf::IntRect(
+						{std::stoi(x), std::stoi(y)},
+						{std::stoi(w), std::stoi(args)}
+					);
+					break;
+				}
+			}
+		}
+	}
 }
 
 int main()

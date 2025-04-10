@@ -31,6 +31,7 @@ struct State
 	std::string hint;
 	std::filesystem::path texture;
 	std::vector<unsigned short> bonePath;
+	std::string currentTexture;
 };
 
 struct Button { std::string text, cmd; };
