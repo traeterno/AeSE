@@ -1,10 +1,11 @@
 #include <SFML/Graphics.hpp>
-#include <iostream>
 #include "FileChooser.hpp"
 #include "Toolbar.hpp"
+#include "Skeleton.hpp"
 
 sf::Font font;
 sf::RenderWindow window;
+Skeleton skeleton;
 
 float deltaTime = 1.0f / 60.0f;
 
@@ -13,28 +14,17 @@ State state = {
 	.page = Page::File,
 	.input = false,
 	.mousePressed = false,
-	.pressedChar = 0
+	.pressedChar = 0,
+	.enter = false,
+	.command = "",
+	.hint = "",
+	.texture = "",
+	.bonePath = {}
 };
 
 void handleKeyEvent(const sf::Event::KeyPressed* key)
 {
 	if (key->code == sf::Keyboard::Key::Enter) { state.enter = true; }
-	// if (key->code == sf::Keyboard::Key::F1) { showShortcuts(&window, &font, state.page); }
-	// if (state.page == Page::File)
-	// {
-	// 	if (key->control && key->code == sf::Keyboard::Key::S)
-	// 	{
-	// 		std::cout << "Saved to " << state.project << std::endl;
-	// 	}
-	// 	if (key->control && key->code == sf::Keyboard::Key::O)
-	// 	{
-	// 		state.project = openFile(&window, &font, ".xml");
-	// 	}
-	// 	if (key->control && key->code == sf::Keyboard::Key::N)
-	// 	{
-	// 		// CurrentState.project = std::filesystem::current_path().string() + "/" + input(&window, &font);
-	// 	}
-	// }
 }
 
 void execute(std::string args)
@@ -42,17 +32,79 @@ void execute(std::string args)
 	if (state.command == "file-open")
 	{
 		state.project = openFile(&window, &font, ".xml");
-		state.command.clear();
+		skeleton.load(&state);
 	}
 	if (state.command == "file-save")
 	{
-		std::cout << "Saved to " << state.project << std::endl;
-		state.command.clear();
+		if (!args.empty())
+		{
+			skeleton.save(&state);
+			state.input = true;
+			state.hint = "Saved; press Enter";
+		}
 	}
 	if (state.command == "file-create")
 	{
 		if (args.empty()) { state.input = true; state.hint = "New file name:"; }
-		else { state.project = std::filesystem::current_path().string() + "/" + args; }
+		else
+		{
+			state.project = std::filesystem::current_path().string() + "/" + args;
+			state.texture = "";
+			skeleton = Skeleton();
+		}
+	}
+	if (state.command == "file-loadTex")
+	{
+		state.texture = openFile(&window, &font, ".png");
+		skeleton.updateTexture(&state);
+	}
+
+	if (state.command == "bone-select")
+	{
+		state.bonePath = parsePath(&skeleton.root, args);
+		state.page = Page::BoneDetails;
+	}
+	if (state.command == "bone-name")
+	{
+		if (args.empty()) { state.input = true; state.hint = "New name:"; }
+		else { getBone(&skeleton.root, state.bonePath)->name = args; }
+	}
+	if (state.command == "bone-length")
+	{
+		if (args.empty()) { state.input = true; state.hint = "New length:"; }
+		else { getBone(&skeleton.root, state.bonePath)->length = std::stof(args); }
+	}
+	if (state.command == "bone-angle")
+	{
+		if (args.empty()) { state.input = true; state.hint = "New angle:"; }
+		else { getBone(&skeleton.root, state.bonePath)->angle = std::stof(args); }
+	}
+	if (state.command == "bone-texture")
+	{
+		if (args.empty()) { state.input = true; state.hint = "Texture name:"; }
+		else { getBone(&skeleton.root, state.bonePath)->texture = args; }
+	}
+	if (state.command == "bone-add")
+	{
+		if (args.empty()) { state.input = true; state.hint = "New bone name:"; }
+		else
+		{
+			getBone(&skeleton.root, state.bonePath)->children.push_back(Bone {.name=args});
+			state.page = Page::Bones;
+		}
+	}
+	if (state.command == "bone-destroy")
+	{
+		if (!args.empty()) { state.input = true; state.hint = "Enter/Escape:"; }
+		else
+		{
+			if (!state.bonePath.size()) return;
+			auto index = state.bonePath.back();
+			state.bonePath.pop_back();
+			auto bone = getBone(&skeleton.root, state.bonePath);
+			bone->children.erase(bone->children.begin() + index);
+			state.page = Page::Bones;
+		}
 	}
 }
 
@@ -90,7 +142,8 @@ int main()
 		deltaTime = deltaClock.restart().asSeconds();
 		
 		window.clear({127, 127, 127, 255});
-		drawToolbar(&window, &state, &font);
+		drawToolbar(&window, &state, &font, &skeleton);
+		skeleton.draw(&window, &state);
 		window.display();
 	}
 	return 0;

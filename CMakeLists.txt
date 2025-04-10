@@ -5,5 +5,5 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
-add_executable(AeSE src/main.cpp src/FileChooser.cpp src/Toolbar.cpp)
-target_link_libraries(AeSE sfml-window sfml-graphics sfml-system)
+add_executable(AeSE src/main.cpp src/FileChooser.cpp src/Toolbar.cpp src/Skeleton.cpp)
+target_link_libraries(AeSE sfml-window sfml-graphics sfml-system pugixml)
