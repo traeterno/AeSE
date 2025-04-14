@@ -7,17 +7,25 @@
 typedef std::vector<unsigned short> BonePath;
 
 namespace sf { class RenderTarget; }
+namespace pugi { class xml_node; }
 
 struct State;
+
+class Skeleton;
 
 struct Bone
 {
 	float length, angle;
-	std::string name, texture;
+	std::string name, visible;
 	std::vector<Bone> children;
+	void update(Skeleton* s, float x, float y, float a);
+	void toNode(pugi::xml_node node);
+	void parse(pugi::xml_node node);
 };
 
-struct Texture { std::string name; sf::IntRect rect; };
+struct Texture { std::string name; sf::IntRect rect; sf::Vector2f origin; };
+
+struct VisibleBone { std::string name, texture; float x, y, a; int layer; };
 
 class Skeleton
 {
@@ -26,9 +34,13 @@ public:
 	void load(State* state);
 	void save(State* state);
 	void updateTexture(State* state);
+	void update(State* state);
 	void draw(sf::RenderTarget* target, State* state);
+	Texture* getTexture(std::string name);
+	VisibleBone* getVisible(std::string name);
 	Bone root;
 	std::vector<Texture> textures;
+	std::vector<VisibleBone> visible;
 	sf::Texture texture;
 };
 

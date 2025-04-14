@@ -14,9 +14,9 @@ enum Page
 	Textures,
 	Bones,
 	Animations,
-	TexDetails,
 	BoneDetails,
-	AnimDetails
+	AnimDetails,
+	Drawables
 };
 
 struct State
@@ -32,6 +32,7 @@ struct State
 	std::filesystem::path texture;
 	std::vector<unsigned short> bonePath;
 	std::string currentTexture;
+	std::string currentDrawable;
 };
 
 struct Button { std::string text, cmd; };
