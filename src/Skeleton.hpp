@@ -27,6 +27,21 @@ struct Texture { std::string name; sf::IntRect rect; sf::Vector2f origin; };
 
 struct VisibleBone { std::string name, texture; float x, y, a; int layer; };
 
+struct Change
+{
+	int boneID;
+};
+
+struct Frame
+{
+	// 
+};
+
+struct Animation
+{
+	// 
+};
+
 class Skeleton
 {
 public:
