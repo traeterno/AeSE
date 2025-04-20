@@ -3,9 +3,13 @@
 #include "Skeleton.hpp"
 #include <SFML/Graphics.hpp>
 
+#define PAGE sf::RenderWindow* window, State* state, sf::Font* font, float ox, float tw
+#define SKEL_PAGE sf::RenderWindow* window, State* state, Skeleton* s, sf::Font* font, float ox, float tw
+
 sf::String inputBox;
 Bone* currentBone;
 Texture* currentTexture;
+Animation* currentAnim;
 
 enum TextAnchor { Left, Right, Center, Top, Bottom};
 
@@ -85,7 +89,7 @@ void handleButton(sf::Vector2f mPos, State* state, sf::Text* txt, sf::String cmd
 	}
 }
 
-void drawFilePage(sf::RenderWindow* window, State* state, sf::Font* font, float ox, float tw)
+void drawFilePage(PAGE)
 {
 	if (state->project.empty())
 	{
@@ -137,14 +141,14 @@ void iterateBones(sf::RenderWindow* window, float ox, Bone* b, int layer, sf::Fo
 	}
 }
 
-void drawBonesPage(sf::RenderWindow* window, State* state, Skeleton* s, sf::Font* font, float ox, float tw)
+void drawBonesPage(SKEL_PAGE)
 {
 	currentBone = nullptr;
 	float y = 2;
 	iterateBones(window, ox, &s->root, 0, font, &y, state, "/");
 }
 
-void drawBoneDetailsPage(sf::RenderWindow* window, State* state, Skeleton* s, sf::Font* font, float ox, float tw)
+void drawBoneDetailsPage(SKEL_PAGE)
 {
 	if (!currentBone) currentBone = getBone(&s->root, state->bonePath);
 	auto mPos = (sf::Vector2f)sf::Mouse::getPosition(*window);
@@ -176,7 +180,7 @@ void drawBoneDetailsPage(sf::RenderWindow* window, State* state, Skeleton* s, sf
 	window->draw(destroy);
 }
 
-void drawTexturesPage(sf::RenderWindow* window, State* state, Skeleton* s, sf::Font* font, float ox, float tw)
+void drawTexturesPage(SKEL_PAGE)
 {
 	currentTexture = nullptr;
 	auto mPos = (sf::Vector2f)sf::Mouse::getPosition(*window);
@@ -212,7 +216,7 @@ void drawTexturesPage(sf::RenderWindow* window, State* state, Skeleton* s, sf::F
 	}
 }
 
-void drawDrawablesPage(sf::RenderWindow* window, State* state, Skeleton* s, sf::Font* font, float ox, float tw)
+void drawDrawablesPage(SKEL_PAGE)
 {
 	currentTexture = nullptr;
 	auto mPos = (sf::Vector2f)sf::Mouse::getPosition(*window);
@@ -235,6 +239,34 @@ void drawDrawablesPage(sf::RenderWindow* window, State* state, Skeleton* s, sf::
 		handleButton(mPos, state, &rect, "drawable-texture", "current-" + v->name);
 		window->draw(name);
 		window->draw(rect);
+	}
+}
+
+void drawAnimsPage(SKEL_PAGE)
+{
+	currentAnim = state->currentAnimation == -1 ? nullptr : &s->anims[state->currentAnimation];
+	auto mPos = (sf::Vector2f)sf::Mouse::getPosition(*window);
+
+	auto add = drawText(font, "New", {ox + tw / 2, 1}, Center);
+	auto remove = drawText(font, "Delete", {ox + tw / 2, 2}, Center);
+
+	auto current = drawText(font, currentAnim ? currentAnim->name : "None", {ox + tw / 2, 5}, Center);
+
+	handleButton(mPos, state, &add, "anim-add");
+	handleButton(mPos, state, &remove, "anim-remove");
+	handleButton(mPos, state, &current, "anim-select");
+
+	window->draw(add);
+	window->draw(remove);
+	window->draw(drawText(font, "Current:", {ox + tw / 2, 4}, Center));
+	window->draw(current);
+
+	for (int i = 0; i < s->anims.size(); i++)
+	{
+		auto anim = &s->anims[i];
+		auto entry = drawText(font, anim->name, {ox, float(7 + i)});
+		handleButton(mPos, state, &entry, "anim-select", anim->name);
+		window->draw(entry);
 	}
 }
 
@@ -302,6 +334,7 @@ void drawToolbar(sf::RenderWindow *window, State* state, sf::Font* font, Skeleto
 		case BoneDetails: drawBoneDetailsPage(window, state, s, font, ox, tw); break;
 		case Textures: drawTexturesPage(window, state, s, font, ox, tw); break;
 		case Drawables: drawDrawablesPage(window, state, s, font, ox, tw); break;
+		case Animations: drawAnimsPage(window, state, s, font, ox, tw); break;
 		default: break;
 	}
 }

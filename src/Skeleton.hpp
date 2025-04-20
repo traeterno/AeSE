@@ -27,19 +27,26 @@ struct Texture { std::string name; sf::IntRect rect; sf::Vector2f origin; };
 
 struct VisibleBone { std::string name, texture; float x, y, a; int layer; };
 
-struct Change
-{
-	int boneID;
-};
-
 struct Frame
 {
-	// 
+	float duration;
+	float angle;
+};
+
+struct Change
+{
+	BonePath path;
+	float currentTime;
+	int currentFrame;
+	std::vector<Frame> frames;
 };
 
 struct Animation
 {
-	// 
+	std::string name;
+	bool repeat;
+	std::vector<Change> changes;
+	void update(State* state, Skeleton* s);
 };
 
 class Skeleton
@@ -56,6 +63,7 @@ public:
 	Bone root;
 	std::vector<Texture> textures;
 	std::vector<VisibleBone> visible;
+	std::vector<Animation> anims;
 	sf::Texture texture;
 };
 

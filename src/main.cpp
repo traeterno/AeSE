@@ -8,8 +8,6 @@ sf::RenderWindow window;
 Skeleton skeleton;
 sf::Vector2f cameraPos;
 
-float deltaTime = 1.0f / 60.0f;
-
 State state = {
 	.project = "",
 	.page = Page::File,
@@ -22,12 +20,51 @@ State state = {
 	.texture = "",
 	.bonePath = {},
 	.currentTexture = "",
-	.currentDrawable = ""
+	.currentDrawable = "",
+	.currentAnimation = -1,
+	.deltaTime = 1.0f / 60.0f,
+	.activeAnimation = false
 };
 
 void handleKeyEvent(const sf::Event::KeyPressed* key)
 {
 	if (key->code == sf::Keyboard::Key::Enter) { state.enter = true; }
+	else if (state.input) return;
+
+	if (key->code == sf::Keyboard::Key::O && key->control) { state.command = "file-open"; execute(""); }
+	if (key->code == sf::Keyboard::Key::S && key->control) { state.command = "file-save"; execute("yes"); }
+
+	if (key->code == sf::Keyboard::Key::Space)
+	{
+		if (state.currentAnimation != -1)
+		{
+			state.activeAnimation = !state.activeAnimation;
+		}
+	}
+	if (key->code == sf::Keyboard::Key::X)
+	{
+		skeleton.anims.push_back(Animation {
+			.name = "test",
+			.repeat = true,
+			.changes = {
+				Change {
+					.path = parsePath(&skeleton.root, "/root/head/"),
+					.currentTime = 0,
+					.currentFrame = 0,
+					.frames = {
+						Frame {
+							.duration = 0.5,
+							.angle = -45
+						},
+						Frame {
+							.duration = 0.5,
+							.angle = 45
+						},
+					}
+				}
+			}
+		});
+	}
 }
 
 void execute(std::string args)
@@ -249,10 +286,52 @@ void execute(std::string args)
 			state.currentDrawable = "";
 		}
 	}
-	else if (true) {}
+
+	else if (state.command == "anim-add")
+	{
+		if (args.empty()) { state.input = true; state.hint = "Animation name:"; }
+		else
+		{
+			skeleton.anims.push_back(Animation {
+				.name = args,
+				.repeat = false,
+				.changes = {}
+			});
+		}
+	}
+	else if (state.command == "anim-remove")
+	{
+		if (args.empty()) { state.input = true; state.hint = "Animation name:"; }
+		else
+		{
+			for (int i = 0; i < skeleton.anims.size(); i++)
+			{
+				if (skeleton.anims[i].name == args)
+				{
+					skeleton.anims.erase(skeleton.anims.begin() + i);
+					break;
+				}
+			}
+		}
+	}
+	else if (state.command == "anim-select")
+	{
+		if (args.empty()) { state.input = true; state.hint = "Animation name:"; }
+		else
+		{
+			for (int i = 0; i < skeleton.anims.size(); i++)
+			{
+				if (skeleton.anims[i].name == args)
+				{
+					state.currentAnimation = i;
+					break;
+				}
+			}
+		}
+	}
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	window.create(
 		sf::VideoMode::getDesktopMode(),
@@ -295,25 +374,25 @@ int main()
 				zoom *= (wheel->delta > 0 ? 2 : 0.5);
 			}
 		}
-		deltaTime = deltaClock.restart().asSeconds();
+		state.deltaTime = deltaClock.restart().asSeconds();
 
 		if (!state.input)
 		{
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
 			{
-				cameraPos.x -= speed * zoom * deltaTime;
+				cameraPos.x -= speed * zoom * state.deltaTime;
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
 			{
-				cameraPos.x += speed * zoom * deltaTime;
+				cameraPos.x += speed * zoom * state.deltaTime;
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
 			{
-				cameraPos.y -= speed * zoom * deltaTime;
+				cameraPos.y -= speed * zoom * state.deltaTime;
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
 			{
-				cameraPos.y += speed * zoom * deltaTime;
+				cameraPos.y += speed * zoom * state.deltaTime;
 			}
 		}
 		

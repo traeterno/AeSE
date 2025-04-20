@@ -51,6 +51,34 @@ void Bone::parse(pugi::xml_node node)
 	}
 }
 
+void Animation::update(State* state, Skeleton* s)
+{
+	for (int i = 0; i < this->changes.size(); i++)
+	{
+		auto c = &changes[i];
+		c->currentTime += state->deltaTime;
+		
+		auto cf = &c->frames[c->currentFrame];
+		if (c->currentTime > cf->duration)
+		{
+			c->currentTime = 0;
+			c->currentFrame++;
+			if (c->currentFrame == c->frames.size()) { c->currentFrame = 0; }
+			cf = &c->frames[c->currentFrame];
+		}
+
+		auto nf = &c->frames[c->currentFrame + 1];
+		if (c->currentFrame >= c->frames.size() - 1)
+		{
+			nf = &c->frames[0];
+		}
+
+		auto b = getBone(&s->root, c->path);
+
+		b->angle = cf->angle + (nf->angle - cf->angle) * (c->currentTime / cf->duration);
+	}
+}
+
 Skeleton::Skeleton()
 {
 	texture = sf::Texture();
@@ -150,6 +178,7 @@ void Skeleton::updateTexture(State* state)
 
 void Skeleton::update(State* state)
 {
+	if (anims.size() && state->activeAnimation) anims[state->currentAnimation].update(state, this);
 	root.update(this, 100, 100, 0);
 }
 
